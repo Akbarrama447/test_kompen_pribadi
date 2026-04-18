@@ -1,0 +1,302 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Jurusan {
+  id           Int          @id @default(autoincrement())
+  namaJurusan  String?      @map("nama_jurusan")
+  prodi        Prodi[]
+  gedung       Gedung[]
+  staf         Staf[]
+
+  @@map("jurusan")
+}
+
+model Semester {
+  id                Int                 @id @default(autoincrement())
+  nama              String?
+  tahun             Int?
+  periode           String?
+  isAktif           Boolean?            @default(false) @map("is_aktif")
+  mulai             DateTime?
+  selesai           DateTime?
+  daftarPekerjaan   DaftarPekerjaan[]
+  importLog         ImportLog[]
+  kompenAwal        KompenAwal[]
+  ekuivalensiKelas  EkuivalensiKelas[]
+  logPotongJam      LogPotongJam[]
+
+  @@map("semester")
+}
+
+model RefStatusEkuivalensi {
+  id                Int                 @id
+  nama              String?
+  ekuivalensiKelas  EkuivalensiKelas[]
+
+  @@map("ref_status_ekuivalensi")
+}
+
+model RefStatusImport {
+  id          Int         @id
+  nama        String?
+  importLog   ImportLog[]
+
+  @@map("ref_status_import")
+}
+
+model RefStatusTugas {
+  id          Int         @id
+  nama        String?
+  penugasan   Penugasan[]
+
+  @@map("ref_status_tugas")
+}
+
+model RefTipePekerjaan {
+  id                Int                 @id
+  nama              String?
+  daftarPekerjaan   DaftarPekerjaan[]
+
+  @@map("ref_tipe_pekerjaan")
+}
+
+model Role {
+  id          Int         @id
+  nama        String?
+  keyMenu     Json?       @map("key_menu")
+  keyCondition Json?      @map("key_condition")
+  users       Users[]
+
+  @@map("roles")
+}
+
+model Users {
+  userId    Int          @id @default(autoincrement()) @map("user_id")
+  email     String?      @unique
+  kataSandi String?      @map("kata_sandi")
+  roleId    Int?         @map("role_id")
+  createdAt DateTime?    @default(now()) @map("created_at")
+  role      Role?        @relation(fields: [roleId], references: [id])
+  mahasiswa Mahasiswa?
+  staf      Staf?
+
+  @@map("users")
+}
+
+model Prodi {
+  id          Int      @id @default(autoincrement())
+  jurusanId   Int?     @map("jurusan_id")
+  namaProdi   String?  @map("nama_prodi")
+  jurusan     Jurusan? @relation(fields: [jurusanId], references: [id])
+  kelas       Kelas[]
+
+  @@map("prodi")
+}
+
+model PengaturanSistem {
+  id         Int     @id @default(autoincrement())
+  grup       String?
+  key        String? @unique
+  value      String?
+  tipeData   String? @map("tipe_data")
+  keterangan String?
+
+  @@map("pengaturan_sistem")
+}
+
+model Menu {
+  id        Int     @id @default(autoincrement())
+  key       String  @unique
+  label     String
+  icon      String?
+  path      String
+  urutan    Int?    @default(0)
+  parentId  Int?    @map("parent_id")
+  createdAt DateTime? @default(now()) @map("created_at")
+  parent    Menu?   @relation("MenuHierarchy", fields: [parentId], references: [id])
+  children  Menu[]  @relation("MenuHierarchy")
+
+  @@map("menus")
+}
+
+model Kelas {
+  id                Int                 @id @default(autoincrement())
+  prodiId           Int?                @map("prodi_id")
+  namaKelas         String?             @map("nama_kelas")
+  prodi             Prodi?              @relation(fields: [prodiId], references: [id])
+  mahasiswa         Mahasiswa[]
+  ekuivalensiKelas  EkuivalensiKelas[]
+
+  @@map("kelas")
+}
+
+model Staf {
+  nip               String              @id
+  userId            Int?                @unique @map("user_id")
+  nama              String?
+  jurusanId         Int?                @map("jurusan_id")
+  tipeStaf          String?             @map("tipe_staf")
+  users             Users?              @relation(fields: [userId], references: [userId])
+  jurusan           Jurusan?            @relation(fields: [jurusanId], references: [id])
+  daftarPekerjaan   DaftarPekerjaan[]
+  importLog         ImportLog[]
+  ekuivalensiKelas  EkuivalensiKelas[]  @relation("EkuivalensiVerifiedBy")
+  penugasan         Penugasan[]         @relation("PenugasanVerifiedBy")
+
+  @@map("staf")
+}
+
+model Mahasiswa {
+  nim               String              @id
+  userId            Int?                @unique @map("user_id")
+  nama              String?
+  kelasId           Int?                @map("kelas_id")
+  users             Users?              @relation(fields: [userId], references: [userId])
+  kelas             Kelas?              @relation(fields: [kelasId], references: [id])
+  kompenAwal        KompenAwal[]
+  ekuivalensiKelas  EkuivalensiKelas[]  @relation("EkuivalensiPJ")
+  penugasan         Penugasan[]
+  logPotongJam      LogPotongJam[]
+
+  @@map("mahasiswa")
+}
+
+model Gedung {
+  id          Int         @id @default(autoincrement())
+  jurusanId   Int?        @map("jurusan_id")
+  namaGedung  String?     @map("nama_gedung")
+  jurusan     Jurusan?    @relation(fields: [jurusanId], references: [id])
+  ruangan     Ruangan[]
+
+  @@map("gedung")
+}
+
+model Ruangan {
+  id          Int         @id @default(autoincrement())
+  gedungId    Int?        @map("gedung_id")
+  namaRuangan String?     @map("nama_ruangan")
+  kodeRuangan String?     @map("kode_ruangan")
+  gedung      Gedung?     @relation(fields: [gedungId], references: [id])
+  daftarPekerjaan DaftarPekerjaan[]
+
+  @@map("ruangan")
+}
+
+model ImportLog {
+  id              Int         @id @default(autoincrement())
+  stafNip         String?     @map("staf_nip")
+  semesterId      Int?        @map("semester_id")
+  namaFile        String?     @map("nama_file")
+  totalBaris      Int?        @map("total_baris")
+  suksesBaris     Int?        @map("sukses_baris")
+  errorDetails    Json?       @map("error_details")
+  statusImportId  Int?        @map("status_import_id")
+  createdAt       DateTime?   @default(now()) @map("created_at")
+  staf            Staf?       @relation(fields: [stafNip], references: [nip])
+  semester        Semester?   @relation(fields: [semesterId], references: [id])
+  statusImport    RefStatusImport? @relation(fields: [statusImportId], references: [id])
+  kompenAwal      KompenAwal[]
+
+  @@map("import_log")
+}
+
+model DaftarPekerjaan {
+  id              Int         @id @default(autoincrement())
+  stafNip         String?     @map("staf_nip")
+  semesterId      Int?        @map("semester_id")
+  judul           String?
+  deskripsi       String?
+  tipePekerjaanId Int?        @map("tipe_pekerjaan_id")
+  poinJam         Float?      @map("poin_jam")
+  kuota           Int?
+  ruanganId       Int?        @map("ruangan_id")
+  isAktif         Boolean?    @default(true) @map("is_aktif")
+  tanggalMulai    DateTime?   @map("tanggal_mulai")
+  tanggalSelesai  DateTime?   @map("tanggal_selesai")
+  createdAt       DateTime?   @default(now()) @map("created_at")
+  staf            Staf?       @relation(fields: [stafNip], references: [nip])
+  semester        Semester?   @relation(fields: [semesterId], references: [id])
+  tipePekerjaan   RefTipePekerjaan? @relation(fields: [tipePekerjaanId], references: [id])
+  ruangan         Ruangan?    @relation(fields: [ruanganId], references: [id])
+  penugasan       Penugasan[]
+
+  @@map("daftar_pekerjaan")
+}
+
+model KompenAwal {
+  id            Int         @id @default(autoincrement())
+  nim           String?
+  semesterId    Int?        @map("semester_id")
+  importId      Int?        @map("import_id")
+  totalJamWajib Float?      @map("total_jam_wajib")
+  createdAt     DateTime?   @default(now()) @map("created_at")
+  mahasiswa     Mahasiswa?  @relation(fields: [nim], references: [nim])
+  semester      Semester?   @relation(fields: [semesterId], references: [id])
+  importLog     ImportLog?  @relation(fields: [importId], references: [id])
+
+  @@map("kompen_awal")
+}
+
+model EkuivalensiKelas {
+  id                Int                 @id @default(autoincrement())
+  kelasId           Int?                @map("kelas_id")
+  semesterId        Int?                @map("semester_id")
+  penanggungJawabNim String?            @map("penanggung_jawab_nim")
+  notaUrl           String?             @map("nota_url")
+  nominalTotal      Decimal?            @map("nominal_total")
+  jamDiakui         Float?              @map("jam_diakui")
+  statusEkuivalensiId Int?              @map("status_ekuivalensi_id")
+  verifiedByNip     String?             @map("verified_by_nip")
+  catatan           String?
+  createdAt         DateTime?           @default(now()) @map("created_at")
+  kelas             Kelas?              @relation(fields: [kelasId], references: [id])
+  semester          Semester?           @relation(fields: [semesterId], references: [id])
+  penanggungJawab   Mahasiswa?          @relation("EkuivalensiPJ", fields: [penanggungJawabNim], references: [nim])
+  statusEkuivalensi RefStatusEkuivalensi? @relation(fields: [statusEkuivalensiId], references: [id])
+  verifiedBy        Staf?               @relation("EkuivalensiVerifiedBy", fields: [verifiedByNip], references: [nip])
+  logPotongJam      LogPotongJam[]
+
+  @@map("ekuivalensi_kelas")
+}
+
+model Penugasan {
+  id                Int                 @id @default(autoincrement())
+  pekerjaanId       Int?                @map("pekerjaan_id")
+  nim               String?
+  statusTugasId     Int?                @map("status_tugas_id")
+  detailPengerjaan  Json?               @map("detail_pengerjaan")
+  catatanVerifikasi String?             @map("catatan_verifikasi")
+  diverifikasiOlehNip String?           @map("diverifikasi_oleh_nip")
+  waktuVerifikasi   DateTime?           @map("waktu_verifikasi")
+  createdAt         DateTime?           @default(now()) @map("created_at")
+  pekerjaan         DaftarPekerjaan?    @relation(fields: [pekerjaanId], references: [id])
+  mahasiswa         Mahasiswa?          @relation(fields: [nim], references: [nim])
+  statusTugas       RefStatusTugas?     @relation(fields: [statusTugasId], references: [id])
+  diverifikasiOleh  Staf?               @relation("PenugasanVerifiedBy", fields: [diverifikasiOlehNip], references: [nip])
+  logPotongJam      LogPotongJam[]
+
+  @@map("penugasan")
+}
+
+model LogPotongJam {
+  id            Int         @id @default(autoincrement())
+  nim           String?
+  semesterId    Int?        @map("semester_id")
+  penugasanId   Int?        @map("penugasan_id")
+  ekuivalensiId Int?        @map("ekuivalensi_id")
+  jamDikurangi  Float?      @map("jam_dikurangi")
+  keterangan    String?
+  dibuatPada    DateTime?   @default(now()) @map("dibuat_pada")
+  mahasiswa     Mahasiswa?  @relation(fields: [nim], references: [nim])
+  semester      Semester?   @relation(fields: [semesterId], references: [id])
+  penugasan     Penugasan?  @relation(fields: [penugasanId], references: [id])
+  ekuivalensi   EkuivalensiKelas? @relation(fields: [ekuivalensiId], references: [id])
+
+  @@map("log_potong_jam")
+}

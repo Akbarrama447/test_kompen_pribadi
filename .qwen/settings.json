@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npx *)",
+      "Bash(npm run *)",
+      "Bash(curl *)",
+      "Bash(taskkill *)",
+      "Bash(rmdir *)",
+      "Bash(del *)",
+      "Bash(npm cache *)",
+      "Bash(node *)",
+      "Bash(psql *)",
+      "Bash(where *)",
+      "Bash(dir *)",
+      "Bash(python *)",
+      "Bash(pip install *)"
+    ]
+  },
+  "$version": 3
+}
